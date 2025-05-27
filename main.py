@@ -7,6 +7,10 @@ from tensorflow.keras import layers, models, Model
 from sklearn.decomposition import PCA
 from sklearn.datasets import make_classification
 from sklearn.model_selection import train_test_split
+import os
+
+# Create directory to save images
+os.makedirs("images", exist_ok=True)
 
 
 # Generate synthetic data
@@ -23,6 +27,7 @@ def generate_data(n_samples=5000):
 
     return x.astype('float32'), c.astype('float32'), y.astype('float32')
 
+
 # Concept Encoder: x → ĉ
 def build_concept_encoder(input_dim, concept_dim):
     inputs = layers.Input(shape=(input_dim,))
@@ -31,12 +36,14 @@ def build_concept_encoder(input_dim, concept_dim):
     c_hat = layers.Dense(concept_dim, activation='sigmoid')(x)  # output = concept predictions
     return Model(inputs, c_hat, name="ConceptEncoder")
 
+
 # Label Predictor: ĉ → ŷ
 def build_label_predictor(concept_dim):
     inputs = layers.Input(shape=(concept_dim,))
     x = layers.Dense(16, activation='relu')(inputs)
     y_hat = layers.Dense(1, activation='sigmoid')(x)
     return Model(inputs, y_hat, name="LabelPredictor")
+
 
 x, c, y = generate_data()
 x_train, x_test, c_train, c_test, y_train, y_test = train_test_split(x, c, y, test_size=0.2)
@@ -54,6 +61,7 @@ plt.ylabel("PCA Component 2")
 plt.colorbar(label="Label (0 = False, 1 = True)")
 plt.grid(True)
 plt.tight_layout()
+plt.savefig("images/pca_projection.png")
 plt.show()
 
 # Combine into CBM
@@ -119,6 +127,7 @@ for i in range(c.shape[1]):
     ax.set_xlim(-0.1, 1.1)
     ax.set_ylim(-0.1, 1.1)
 plt.tight_layout()
+plt.savefig("images/concept_scatter.png")
 plt.show()
 
 # 2. Label prediction changes after interventions (for all test samples)
@@ -152,7 +161,9 @@ plt.xlabel("Sample index")
 plt.ylabel("Predicted label probability")
 plt.legend()
 plt.title("Label Predictions Before and After Intervention on Concept 0")
+plt.savefig("images/intervention_plot.png")
 plt.grid(True)
+
 plt.show()
 
 # 3. Confusion Matrices
@@ -173,6 +184,7 @@ cm_label = confusion_matrix(y_test, y_pred_label)
 disp_label = ConfusionMatrixDisplay(confusion_matrix=cm_label, display_labels=[0, 1])
 disp_label.plot(cmap='Greens')
 plt.title("Confusion Matrix for Label Prediction")
+plt.savefig("images/confusion_matrix.png")
 plt.show()
 
 
@@ -206,13 +218,9 @@ def plot_decision_boundary(label_predictor, fixed_concept_idx=2, fixed_value=0):
     plt.scatter(c_test[mask, 0], c_test[mask, 1], c=y_test[mask], edgecolor='k', cmap='coolwarm', marker='o',
                 label='Test points')
     plt.legend()
+    plt.savefig(f"images/decision_boundary_c{fixed_concept_idx}_{fixed_value}.png")
     plt.show()
 
 
 plot_decision_boundary(label_predictor, fixed_concept_idx=2, fixed_value=0)
 plot_decision_boundary(label_predictor, fixed_concept_idx=2, fixed_value=1)
-
-
-
-
-
